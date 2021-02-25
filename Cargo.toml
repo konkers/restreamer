@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "obs-rs",
+    "obs-service",
+    "restream-cli",
+    "rpc",
+]

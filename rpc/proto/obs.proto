@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "net.konkers.restreamer.obs";
+option java_outer_classname = "ObsProto";
+
+package obs;
+
+service Obs {
+    rpc Test(TestRequest) returns (TestReply);
+    rpc SetStream(SetStreamRequest) returns (SetStreamReply);
+}
+
+message TestRequest {
+    string text = 1;
+}
+
+message TestReply {
+    string text = 1;
+}
+
+message SetStreamRequest {
+    string source = 1;
+    string url = 2;
+}
+
+message SetStreamReply {
+}
