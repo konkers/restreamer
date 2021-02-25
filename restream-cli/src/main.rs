@@ -1,7 +1,6 @@
 use anyhow::Result;
 use rpc::{
     obs_client::ObsClient, GetSourceStatusRequest, SetSourceVolumeRequest, SetStreamRequest,
-    TestRequest,
 };
 use structopt::StructOpt;
 
@@ -25,7 +24,7 @@ async fn main() -> Result<()> {
                 url,
             });
 
-            let response = client.set_stream(request).await?;
+            let _response = client.set_stream(request).await?;
         }
         Opt::Volume {
             source_name,
@@ -38,7 +37,7 @@ async fn main() -> Result<()> {
                 volume,
             });
 
-            let response = client.set_source_volume(request).await?;
+            let _response = client.set_source_volume(request).await?;
         }
         Opt::SourceStatus {} => {
             let mut client = ObsClient::connect("http://[::1]:50051").await?;
