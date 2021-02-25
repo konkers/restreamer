@@ -1,10 +1,14 @@
 use anyhow::Result;
-use rpc::{obs_client::ObsClient, SetSourceVolumeRequest, SetStreamRequest, TestRequest};
+use rpc::{
+    obs_client::ObsClient, GetSourceStatusRequest, SetSourceVolumeRequest, SetStreamRequest,
+    TestRequest,
+};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 enum Opt {
     SetStream { source_name: String, url: String },
+    SourceStatus {},
     Volume { source_name: String, volume: f32 },
 }
 
@@ -35,6 +39,15 @@ async fn main() -> Result<()> {
             });
 
             let response = client.set_source_volume(request).await?;
+        }
+        Opt::SourceStatus {} => {
+            let mut client = ObsClient::connect("http://[::1]:50051").await?;
+
+            let request = tonic::Request::new(GetSourceStatusRequest {});
+
+            let response = client.get_source_status(request).await?;
+
+            println!("{:#?}", response);
         }
     }
 

@@ -2,7 +2,8 @@ use anyhow::{anyhow, Result};
 use obs;
 use rpc::{
     obs_server::{Obs, ObsServer},
-    SetSourceVolumeRequest, SetStreamReply, SetStreamRequest, TestReply, TestRequest,
+    GetSourceStatusReply, GetSourceStatusRequest, SetSourceVolumeRequest, SetStreamReply,
+    SetStreamRequest, SourceStatus, TestReply, TestRequest,
 };
 use std::{
     ffi::{c_void, CStr, CString},
@@ -92,6 +93,26 @@ impl Obs for ThisServer {
             .map_err(|e| Status::new(tonic::Code::Unknown, format!("{}", e)))?;
 
         let reply = SetStreamReply {};
+        Ok(Response::new(reply))
+    }
+
+    async fn get_source_status(
+        &self,
+        request: tonic::Request<GetSourceStatusRequest>,
+    ) -> Result<tonic::Response<GetSourceStatusReply>, tonic::Status> {
+        println!("Got get stream status from {:?}", request.remote_addr());
+
+        let mut sources = Vec::new();
+        Source::for_each(|source: &Source| {
+            sources.push(SourceStatus {
+                name: source.get_name().unwrap_or("".into()),
+                has_video: source.has_video(),
+                has_audio: source.has_audio(),
+                is_composite: source.is_composite(),
+                volume: source.get_volume(),
+            });
+        });
+        let reply = GetSourceStatusReply { sources };
         Ok(Response::new(reply))
     }
 }

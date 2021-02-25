@@ -10,6 +10,7 @@ service Obs {
     rpc Test(TestRequest) returns (TestReply);
     rpc SetStream(SetStreamRequest) returns (SetStreamReply);
     rpc SetSourceVolume(SetSourceVolumeRequest) returns (SetStreamReply);
+    rpc GetSourceStatus(GetSourceStatusRequest) returns (GetSourceStatusReply);
 }
 
 message TestRequest {
@@ -31,4 +32,19 @@ message SetSourceVolumeRequest {
 }
 
 message SetStreamReply {
+}
+
+message GetSourceStatusRequest {
+}
+
+message GetSourceStatusReply {
+    repeated SourceStatus sources = 1;
+}
+
+message SourceStatus {
+    string name = 1;
+    bool has_video = 2;
+    bool has_audio = 3;
+    bool is_composite = 4;
+    float volume = 5;
 }

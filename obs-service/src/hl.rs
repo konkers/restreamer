@@ -2,7 +2,8 @@ use anyhow::{anyhow, Result};
 pub use obs as ll;
 use std::{
     convert::TryInto,
-    ffi::{c_void, CString},
+    ffi::{c_void, CStr, CString},
+    mem,
     ptr::{null, null_mut},
 };
 use x11::{glx, xlib};
@@ -154,10 +155,68 @@ pub struct Source {
     source: *mut ll::obs_source_t,
 }
 
+unsafe extern "C" fn source_callback_handler(
+    callback: *mut c_void,
+    source: *mut ll::obs_source_t,
+) -> bool {
+    let callback: &mut &mut FnMut(&Source) = unsafe { mem::transmute(callback) };
+    let source = Source::from_raw_inc(source);
+    callback(&source);
+    true
+}
+
 impl Source {
     pub fn by_name(name: &str) -> Result<Source> {
         let source = unsafe { ll::obs_get_source_by_name(cstr!(name)) };
         Ok(Source { source })
+    }
+
+    pub fn from_raw_inc(source: *mut ll::obs_source_t) -> Source {
+        unsafe {
+            ll::obs_source_addref(source);
+        }
+        Source { source }
+    }
+
+    pub fn for_each<F: FnMut(&Source)>(mut callback: F) {
+        let mut cb: &mut FnMut(&Source) = &mut callback;
+        let cb = &mut cb;
+        unsafe {
+            ll::obs_enum_sources(Some(source_callback_handler), cb as *mut _ as *mut c_void);
+        }
+    }
+
+    pub fn get_name(&self) -> Result<String> {
+        unsafe {
+            let name_raw = ll::obs_source_get_name(self.source);
+            if name_raw.is_null() {
+                return Err(anyhow!("failed to get name"));
+            }
+            let name = CStr::from_ptr(name_raw).to_str()?;
+            Ok(name.into())
+        }
+    }
+
+    pub fn has_video(&self) -> bool {
+        let flags = unsafe { ll::obs_source_get_output_flags(self.source) };
+
+        (flags & ll::OBS_SOURCE_VIDEO) != 0
+    }
+
+    pub fn has_audio(&self) -> bool {
+        let flags = unsafe { ll::obs_source_get_output_flags(self.source) };
+
+        (flags & ll::OBS_SOURCE_AUDIO) != 0
+    }
+
+    pub fn is_composite(&self) -> bool {
+        let flags = unsafe { ll::obs_source_get_output_flags(self.source) };
+
+        (flags & ll::OBS_SOURCE_COMPOSITE) != 0
+    }
+
+    pub fn get_volume(&self) -> f32 {
+        unsafe { ll::obs_source_get_volume(self.source) }
     }
 
     pub fn set_volume(&mut self, volume: f32) {
