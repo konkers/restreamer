@@ -150,6 +150,31 @@ impl Drop for Array {
     }
 }
 
+pub struct Source {
+    source: *mut ll::obs_source_t,
+}
+
+impl Source {
+    pub fn by_name(name: &str) -> Result<Source> {
+        let source = unsafe { ll::obs_get_source_by_name(cstr!(name)) };
+        Ok(Source { source })
+    }
+
+    pub fn set_volume(&mut self, volume: f32) {
+        unsafe {
+            ll::obs_source_set_volume(self.source, volume);
+        }
+    }
+}
+
+impl Drop for Source {
+    fn drop(&mut self) {
+        unsafe {
+            ll::obs_source_release(self.source);
+        }
+    }
+}
+
 pub struct SessionSettings {
     pub base_width: u32,
     pub base_height: u32,

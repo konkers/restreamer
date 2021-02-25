@@ -9,6 +9,7 @@ package obs;
 service Obs {
     rpc Test(TestRequest) returns (TestReply);
     rpc SetStream(SetStreamRequest) returns (SetStreamReply);
+    rpc SetSourceVolume(SetSourceVolumeRequest) returns (SetStreamReply);
 }
 
 message TestRequest {
@@ -22,6 +23,11 @@ message TestReply {
 message SetStreamRequest {
     string source = 1;
     string url = 2;
+}
+
+message SetSourceVolumeRequest {
+    string source = 1;
+    float volume = 2;
 }
 
 message SetStreamReply {

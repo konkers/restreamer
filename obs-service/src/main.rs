@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use obs;
 use rpc::{
     obs_server::{Obs, ObsServer},
-    SetStreamReply, SetStreamRequest, TestReply, TestRequest,
+    SetSourceVolumeRequest, SetStreamReply, SetStreamRequest, TestReply, TestRequest,
 };
 use std::{
     ffi::{c_void, CStr, CString},
@@ -13,7 +13,7 @@ use tonic::{transport::Server, Request, Response, Status};
 
 mod hl;
 
-use hl::{Array, Data, Session, SessionSettings};
+use hl::{Array, Data, Session, SessionSettings, Source};
 
 #[derive(Default)]
 pub struct ThisServer {}
@@ -38,6 +38,12 @@ fn set_url(source: &str, url: &str) -> Result<()> {
 
         obs::obs_source_release(source);
     }
+    Ok(())
+}
+
+fn set_volume(source: &str, volume: f32) -> Result<()> {
+    let mut source = Source::by_name(source)?;
+    source.set_volume(volume);
     Ok(())
 }
 
@@ -68,6 +74,22 @@ impl Obs for ThisServer {
         let source = req.source;
         let url = req.url;
         set_url(&source, &url).map_err(|e| Status::new(tonic::Code::Unknown, format!("{}", e)))?;
+
+        let reply = SetStreamReply {};
+        Ok(Response::new(reply))
+    }
+
+    async fn set_source_volume(
+        &self,
+        request: tonic::Request<SetSourceVolumeRequest>,
+    ) -> Result<tonic::Response<SetStreamReply>, tonic::Status> {
+        println!("Got set stream request from {:?}", request.remote_addr());
+
+        let req = request.into_inner();
+        let source = req.source;
+        let volume = req.volume;
+        set_volume(&source, volume)
+            .map_err(|e| Status::new(tonic::Code::Unknown, format!("{}", e)))?;
 
         let reply = SetStreamReply {};
         Ok(Response::new(reply))
